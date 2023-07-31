@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Video HLS Adaptive streaming</title>
+  <link href="//vjs.zencdn.net/7.10.2/video-js.min.css" rel="stylesheet">
+  <script src="//vjs.zencdn.net/7.10.2/video.min.js"></script>
+</head>
+<body>
+  <video
+    id="my_video_1"
+    class="video-js vjs-default-skin"
+    type="application/x-mpegURL"
+    src="http://localhost:8000/live/STREAM_NAME/index.m3u8"
+    width="640"
+    height="268"
+    controls>
+  </video>
+<script src="https://vjs.zencdn.net/8.3.0/video.min.js"></script>
+
+<script>
+
+  const video = document.querySelector('#my_video_1')
+  const src   = video.getAttribute('src')
+  const type  = video.getAttribute('type')
+
+  const player = videojs(video)
+  player.src({
+    src: src,
+    type: type
+  })
+
+  let qualityLevels = player.qualityLevels();
+
+  // disable quality levels with less than 720 horizontal lines of resolution when added
+  // to the list.
+  qualityLevels.on('addqualitylevel', function(event) {
+    let qualityLevel = event.qualityLevel;
+
+    if (qualityLevel.height >= 720) {
+      qualityLevel.enabled = true;
+    } else {
+      qualityLevel.enabled = false;
+    }
+  });
+
+  // example function that will toggle quality levels between SD and HD, defining and HD
+  // quality as having 720 horizontal lines of resolution or more
+  let toggleQuality = (function() {
+    let enable720 = true;
+
+    return function() {
+      for (let qualityLevel of qualityLevels) {
+        if (qualityLevel.height >= 720) {
+          qualityLevel.enabled = enable720;
+        } else {
+          qualityLevel.enabled = !enable720;
+        }
+      }
+      enable720 = !enable720;
+    };
+  })();
+
+  let currentSelectedQualityLevelIndex = qualityLevels.selectedIndex; // -1 if no level selected
+
+  // Listen to change events for when the player selects a new quality level
+  qualityLevels.on('change', function() {
+    console.log('Quality Level changed!');
+    console.log('New level:', qualityLevels[qualityLevels.selectedIndex]);
+  });
+
+</script>
+</body>
+</html>
